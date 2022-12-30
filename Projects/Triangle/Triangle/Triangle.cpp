@@ -14,7 +14,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Then, we set the OpenGL profile to the core profile.
 
 	// After the initialization, we need to create a window object.
-	GLFWwindow* window = glfwCreateWindow(800, 600, "HelloWindow!", NULL, NULL); // A window of 800 x 600 named 'HelloWindow!'
+	GLFWwindow* window = glfwCreateWindow(800, 600, "Triangle :)", NULL, NULL); // A window of 800 x 600 named 'HelloWindow!'
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -45,15 +45,82 @@ int main()
 	glGenBuffers(1, &VBO); // We generate a Vertex Buffer Object (VBO), that is used to store large amounts of data, like vertices.
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); // We bind the buffer object we created to a ARRAY BUFFER object.
+	// Every time we call GL_ARRAY_BUFFER object, we are using the VBO we just created (that is binded to the array buffer object)
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // So here we are copying the vertices[] data into the buffer's memory.
 
 	// Now, to procces the triangle data, we have to create a vertex shader and a fragment shader.
+	// This shaders are writen in GLSL.
 
+	const char* vertexShaderSource = "#version 330 core\n"
+		"layout (location = 0) in vec3 aPos;\n"
+		"void main()\n"
+		"{\n"
+		"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+		"}\0";
 
+	// In order to use it, we must create a new shader object, bind it, and compile it.
 
-	// Now, every time we call GL_ARRAY_BUFFER object, we are using the VBO we just created (that is binded to the array buffer objecta)
+	unsigned int vertexShader;
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
 
+	// We should check if the compilation succeded.
+
+	int  success;
+	char infoLog[512];
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+	if (!success)
+	{
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	const char* fragmentShaderSource = "#version 330\n"
+		"out vec4 FragColor;\n"
+		"void main()\n"
+		"{\n"
+		"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);)\n"
+		"}\0";
+
+	unsigned int fragmentShader;
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+
+	if (!success)
+	{
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	// Now that we have both shaders ready, we have to link both shader objects into a shader program.
+
+	unsigned int shaderProgram;
+	shaderProgram = glCreateProgram(); // We create a new shader program object. Now, we have to link the vertex and fragment shaders to it.
+
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::PROGRAM::LINK_FAILED\n" << infoLog << std::endl;
+	}
+
+	// Everything is ready to draw. Now, we specify that we want to use the shader program we just created.
+
+	glUseProgram(shaderProgram);
+	
+	// We also delete the shader objects that we are not going to use anymore.
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
 
 	// NEW CODE ENDS HERE
 
