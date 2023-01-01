@@ -41,13 +41,18 @@ int main()
 	 0.0f,  0.5f, 0.0f
 	};
 
-	unsigned int VBO;
+	unsigned int VBO, VAO;
+	glGenVertexArrays(1, &VAO); // We crate a Vertex Array Object (explanation later)
 	glGenBuffers(1, &VBO); // We generate a Vertex Buffer Object (VBO), that is used to store large amounts of data, like vertices.
+
+	glBindVertexArray(VAO); // We bind the VAO so we can use it.
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); // We bind the buffer object we created to a ARRAY BUFFER object.
 	// Every time we call GL_ARRAY_BUFFER object, we are using the VBO we just created (that is binded to the array buffer object)
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // So here we are copying the vertices[] data into the buffer's memory.
+
+	glEnableVertexAttribArray(0); // We tell OpenGL that this is the VAO we want to use to draw for now on.
 
 	// Now, to procces the triangle data, we have to create a vertex shader and a fragment shader.
 	// This shaders are writen in GLSL.
@@ -82,7 +87,7 @@ int main()
 		"out vec4 FragColor;\n"
 		"void main()\n"
 		"{\n"
-		"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);)\n"
+		"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
 		"}\0";
 
 	unsigned int fragmentShader;
@@ -108,7 +113,8 @@ int main()
 	glLinkProgram(shaderProgram);
 
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
+	if (!success)
+	{
 		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::PROGRAM::LINK_FAILED\n" << infoLog << std::endl;
 	}
@@ -116,11 +122,20 @@ int main()
 	// Everything is ready to draw. Now, we specify that we want to use the shader program we just created.
 
 	glUseProgram(shaderProgram);
-	
+
 	// We also delete the shader objects that we are not going to use anymore.
 
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
+
+	// Then, we tell OpenGL how is our vertex data stored. This is, a vertex per 12 bytes, were each component is stores in 4 bytes.
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// With everything we have we should be able to draw a triangle already, but imagine we wanted to draw multiples triangles. We should set everything
+	// up each time we want to draw a new one. There is where a VAO comes up. A VAO stores a configuration so multiples object can use it. In this case,
+	// line 55 is telling OpenGL that that is the configuration we want to use to draw from that point.
 
 	// NEW CODE ENDS HERE
 
@@ -131,6 +146,15 @@ int main()
 		// Rendering commands should be added here
 		glClearColor(0.2f, 0.5f, 0.3f, 1.0f); // Clears the screen with the color specified.
 		glClear(GL_COLOR_BUFFER_BIT); // GL_COLOR_BUFFER_BIT makes it so it clears the screen with the color specified in glClearColor function. This function has two other options.
+
+		// CODE TO DRAW A TRIANGLE STARTS HERE
+
+		glUseProgram(shaderProgram); // This line and the next one are innecesary. We already configure this things early. It's here just to be consistent.
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3); // Tells OpenGL to draw  3 vertices in a "triangle maner".
+
+		// CODE TO DRAW A TRIANGLE ENDS HERE
+
 
 		// Check and call events and swap buffers
 		glfwSwapBuffers(window);
